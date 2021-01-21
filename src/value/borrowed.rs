@@ -43,6 +43,18 @@ pub type Object<'value> = HashMap<Cow<'value, str>, Value<'value>>;
 ///
 /// Will return `Err` if `s` is invalid JSON.
 pub fn to_value<'value>(s: &'value mut [u8]) -> Result<Value<'value>> {
+    parse(s)
+}
+
+/// Parses a slice of bytes into a Value dom. This function will
+/// rewrite the slice to de-escape strings.
+/// As we reference parts of the input slice the resulting dom
+/// has the same lifetime as the slice it was created from.
+///
+/// # Errors
+///
+/// Will return `Err` if `s` is invalid JSON.
+pub fn parse<'value>(s: &'value mut [u8]) -> Result<Value<'value>> {
     match Deserializer::from_slice(s) {
         Ok(de) => Ok(BorrowDeserializer::from_deserializer(de).parse()),
         Err(e) => Err(e),
@@ -58,6 +70,22 @@ pub fn to_value<'value>(s: &'value mut [u8]) -> Result<Value<'value>> {
 ///
 /// Will return `Err` if `s` is invalid JSON.
 pub fn to_value_with_buffers<'value>(
+    s: &'value mut [u8],
+    input_buffer: &mut AlignedBuf,
+    string_buffer: &mut [u8],
+) -> Result<Value<'value>> {
+    parse_with_buffers(s, input_buffer, string_buffer)
+}
+
+/// Parses a slice of bytes into a Value dom. This function will
+/// rewrite the slice to de-escape strings.
+/// As we reference parts of the input slice the resulting dom
+/// has the same lifetime as the slice it was created from.
+///
+/// # Errors
+///
+/// Will return `Err` if `s` is invalid JSON.
+pub fn parse_with_buffers<'value>(
     s: &'value mut [u8],
     input_buffer: &mut AlignedBuf,
     string_buffer: &mut [u8],

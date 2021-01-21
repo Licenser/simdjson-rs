@@ -42,6 +42,19 @@ pub type Object = HashMap<String, Value>;
 ///
 /// Will return `Err` if `s` is invalid JSON.
 pub fn to_value(s: &mut [u8]) -> Result<Value> {
+    parse(s)
+}
+
+/// Parses a slice of bytes into a Value dom. This function will
+/// rewrite the slice to de-escape strings.
+/// We do not keep any references to the raw data but re-allocate
+/// owned memory whereever required thus returning a value without
+/// a lifetime.
+///
+/// # Errors
+///
+/// Will return `Err` if `s` is invalid JSON.
+pub fn parse(s: &mut [u8]) -> Result<Value> {
     match Deserializer::from_slice(s) {
         Ok(de) => Ok(OwnedDeserializer::from_deserializer(de).parse()),
         Err(e) => Err(e),
@@ -58,6 +71,23 @@ pub fn to_value(s: &mut [u8]) -> Result<Value> {
 ///
 /// Will return `Err` if `s` is invalid JSON.
 pub fn to_value_with_buffers(
+    s: &mut [u8],
+    input_buffer: &mut AlignedBuf,
+    string_buffer: &mut [u8],
+) -> Result<Value> {
+    parse_with_buffers(s, input_buffer, string_buffer)
+}
+
+/// Parses a slice of bytes into a Value dom. This function will
+/// rewrite the slice to de-escape strings.
+/// We do not keep any references to the raw data but re-allocate
+/// owned memory whereever required thus returning a value without
+/// a lifetime.
+///
+/// # Errors
+///
+/// Will return `Err` if `s` is invalid JSON.
+pub fn parse_with_buffers(
     s: &mut [u8],
     input_buffer: &mut AlignedBuf,
     string_buffer: &mut [u8],
